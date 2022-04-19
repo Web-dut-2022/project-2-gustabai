@@ -1,0 +1,110 @@
+<!-- extend layout from "auctions/layout.html" -->
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <div class="content">
+        <h3>Listing: {{listing.title}}</h3>
+
+        {% if user.is_authenticated %}
+        {% if listing in user.watchlist.all %}
+        <a href="{% url 'deletefromwatchlist' listing_id=listing.id %}">
+            <button class="btn btn-danger" style="margin-top: 10px;">
+                    Remove from watchlist
+                </button>
+            </a>
+
+        {% else %}
+        <a href="{% url 'watchlist' listing_id=listing.id %}">
+        <button class="btn btn-secondary" style="margin-top: 10px;">
+                Add to watchlist
+            </button>
+        </a>
+        {%endif %}
+
+        {% if user == listing.seller%}
+        <a href="{% url 'close' listing_id=listing.id %}">
+            <button class="btn btn-warning" style="margin-top: 10px;">
+                    Close
+                </button>
+            </a>            
+        {%endif%}
+        {%endif%}
+
+        <br>
+
+        <center><img src="{{listing.image}}" alt="{{listing.title}}" height="300"></center>
+
+        <br>
+
+        <p>{{listing.description}}</p>
+        <p><h4>Price: {{listing.price}}$</h4></p>
+
+        {% if user.is_authenticated %}
+        <div class="sthForBit">
+            <!-- create here sth for bit -->
+            <!-- form with one input:int and button for submit -->
+            <form action="{% url 'bid' listing_id=listing.id %}" method="POST">
+                {% csrf_token %}
+                <input type="number" name="bid" placeholder="Enter your bid" step="0.01">
+                <button type="submit" class="btn btn-primary">Bid</button>
+            </form>
+
+            {% if message %}
+            <br>
+            <p class="alert alert-danger">{{message}}</p>
+            <br>
+            {% endif %}
+        </div>
+        {%endif%}
+
+        <p>Details:</p>
+        <ul>
+            <li>Creted by: {{listing.seller}}</li>
+            <li>Created at: {{listing.created_at}}</li>
+            {%if not listing.category %}
+            <li>Categories: No one category</li>
+            {% else %}
+
+            <li>Categories: {% for category in listing.category.all %} {{category.name}}{% if category != listing.category.last %}, {% else %}. {% endif %}{% endfor %}</li>
+
+            {% endif %}
+        </ul>
+
+        {% if not listing.is_active %}
+            {% if not listing.winner %}
+                <p class="alert alert-success">Winner: Nobody</p>
+            {% else %}
+                <p class="alert alert-success">Winner: {{listing.winner.username}}</p>
+            {% endif %}
+        {% endif %}
+        
+
+        <div class="forcoments">
+            <p>Comments:</p>
+
+            {% if user.is_authenticated %}
+            <div class="createcoment">
+                <form action="{% url 'coment' listing_id=listing.id %}" method="POST">
+                    {% csrf_token %}
+                    <input type="text" name="comment" placeholder="Enter your comment">
+                    <button type="submit" class="btn btn-primary">Comment</button>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if listing.comments.all|length == 0 %}
+                <p>No comments yet</p>
+            {% else %}
+                <br>
+                {% for comment in listing.comments.all %}
+                <div class="comment border" style="margin-left: 5px; padding: 5px; margin-bottom: 8px;">
+                    <p style="font-size: large;">{{comment.user.username}}</p>
+                    <p>{{comment.text}}</p>
+                    <p style="font-size: small; color: dimgray;">{{comment.created_at}}</p>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+        </div>
+    </div>
+{% endblock %}
